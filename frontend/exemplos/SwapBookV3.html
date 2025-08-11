@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>WebdexSwapBookv3 DApp</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.7.0/dist/ethers.umd.min.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #f7f7f7; padding: 20px; }
+    .container { max-width: 800px; margin: auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-weight: bold; margin-bottom: 6px; }
+    input[type="text"] { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; }
+    button { padding: 10px 15px; margin: 5px 0; border: none; border-radius: 6px; cursor: pointer; background-color: #007bff; color: white; font-weight: bold; }
+    button:hover { background-color: #0056b3; }
+    #swaps-list li { border-bottom: 1px solid #ddd; padding: 10px 0; }
+    #swaps-list li:last-child { border-bottom: none; }
+    #status-message { margin: 10px 0; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>WebdexSwapBookv3</h1>
+    <p>Interaja com o contrato inteligente na rede Sepolia.</p>
+    <button id="connectMetaMask">🔌 Conectar MetaMask</button>
+    <button id="getOwnerValueButton">📊 Obter OwnerValue</button>
+    <button id="getPendingSwapsButton">📋 Ver Swaps Pendentes</button>
+    <p id="status-message">❌ Não conectado.</p>
+
+    <h2>Criar Swap</h2>
+    <div class="form-group">
+      <label for="leftTokenAddress">Token a Vender (Endereço):</label>
+      <input type="text" id="leftTokenAddress">
+    </div>
+    <div class="form-group">
+      <label for="leftTokenAmount">Quantidade a Vender:</label>
+      <input type="text" id="leftTokenAmount">
+    </div>
+    <div class="form-group">
+      <label for="rightTokenAddress">Token a Receber (Endereço):</label>
+      <input type="text" id="rightTokenAddress">
+    </div>
+    <div class="form-group">
+      <label for="rightTokenAmount">Quantidade a Receber:</label>
+      <input type="text" id="rightTokenAmount">
+    </div>
+    <button id="approveButton">✅ 1. Aprovar Tokens</button>
+    <button id="createSwapButton">🚀 2. Criar Swap</button>
+
+    <h2>Swaps Pendentes</h2>
+    <ul id="swaps-list"></ul>
+  </div>
+
+  <script>
+    let provider, signer, contract;
+    const contractAddress = "0xA6ceCB5027313f5E7db388709bABe4197B1244bc";
+
+    const contractABI = [
+      { "inputs": [ { "internalType": "uint256", "name": "ownerValue_", "type": "uint256" }, { "internalType": "address", "name": "initialOwner", "type": "address" } ], "stateMutability": "nonpayable", "type": "constructor" },
+      { "inputs": [], "name": "getOwnerValue", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" },
+      { "inputs": [], "name": "getPendingSwaps", "outputs": [ { "components": [ { "internalType": "uint256", "name": "id", "type": "uint256" }, { "internalType": "address", "name": "seller", "type": "address" }, { "internalType": "address", "name": "leftToken", "type": "address" }, { "internalType": "uint256", "name": "leftTokenAmount", "type": "uint256" }, { "internalType": "address", "name": "rightToken", "type": "address" }, { "internalType": "uint256", "name": "rightTokenAmount", "type": "uint256" } ], "internalType": "struct WebdexSwapBookv3.SwapInfo[]", "name": "", "type": "tuple[]" } ], "stateMutability": "view", "type": "function" },
+      { "inputs": [ { "internalType": "address", "name": "leftToken", "type": "address" }, { "internalType": "uint256", "name": "leftTokenAmount", "type": "uint256" }, { "internalType": "address", "name": "rightToken", "type": "address" }, { "internalType": "uint256", "name": "rightTokenAmount", "type": "uint256" } ], "name": "createSwap", "outputs": [], "stateMutability": "payable", "type": "function" }
+    ];
+
+    const erc20Abi = [
+      "function approve(address spender, uint256 amount) returns (bool)",
+      "function decimals() view returns (uint8)"
+    ];
+
+    async function connectWallet() {
+      try {
+        if (!window.ethereum) throw new Error("MetaMask não encontrada");
+        await window.ethereum.request({ method: "eth_requestAccounts" });
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer = await provider.getSigner();
+        contract = new ethers.Contract(contractAddress, contractABI, signer);
+        const address = await signer.getAddress();
+        document.getElementById("status-message").innerText = `✅ Conectado: ${address.slice(0, 6)}...${address.slice(-4)}`;
+      } catch (err) {
+        document.getElementById("status-message").innerText = `❌ Erro: ${err.message}`;
+      }
+    }
+
+    async function getOwnerValue() {
+      try {
+        const value = await contract.getOwnerValue();
+        document.getElementById("status-message").innerText = `📊 OwnerValue: ${ethers.formatEther(value)} ETH`;
+      } catch (err) {
+        document.getElementById("status-message").innerText = `❌ Erro: ${err.message}`;
+      }
+    }
+
+    async function getPendingSwaps() {
+      try {
+        const swaps = await contract.getPendingSwaps();
+        const list = document.getElementById("swaps-list");
+        list.innerHTML = "";
+        if (swaps.length === 0) return list.innerHTML = "<li>Nenhum swap pendente.</li>";
+
+        swaps.forEach(swap => {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <strong>ID:</strong> ${swap.id} <br>
+            <strong>Vendedor:</strong> ${swap.seller} <br>
+            <strong>Vende:</strong> ${swap.leftTokenAmount} de ${swap.leftToken} <br>
+            <strong>Quer:</strong> ${swap.rightTokenAmount} de ${swap.rightToken}
+          `;
+          list.appendChild(li);
+        });
+      } catch (err) {
+        document.getElementById("status-message").innerText = `❌ Erro: ${err.message}`;
+      }
+    }
+
+    async function approveToken() {
+      try {
+        const leftTokenAddress = document.getElementById("leftTokenAddress").value.trim();
+        const leftAmount = document.getElementById("leftTokenAmount").value;
+        const tokenContract = new ethers.Contract(leftTokenAddress, erc20Abi, signer);
+        const decimals = await tokenContract.decimals();
+        const amountParsed = ethers.parseUnits(leftAmount, decimals);
+        const tx = await tokenContract.approve(contractAddress, amountParsed);
+        await tx.wait();
+        document.getElementById("status-message").innerText = `✅ Token aprovado com sucesso.`;
+      } catch (err) {
+        document.getElementById("status-message").innerText = `❌ Erro: ${err.message}`;
+      }
+    }
+
+    async function createSwap() {
+      try {
+        const leftTokenAddress = document.getElementById("leftTokenAddress").value.trim();
+        const leftAmount = document.getElementById("leftTokenAmount").value;
+        const rightTokenAddress = document.getElementById("rightTokenAddress").value.trim();
+        const rightAmount = document.getElementById("rightTokenAmount").value;
+        const ownerValue = await contract.getOwnerValue();
+
+        const leftToken = new ethers.Contract(leftTokenAddress, erc20Abi, signer);
+        const rightToken = new ethers.Contract(rightTokenAddress, erc20Abi, signer);
+        const leftDecimals = await leftToken.decimals();
+        const rightDecimals = await rightToken.decimals();
+
+        const leftAmountParsed = ethers.parseUnits(leftAmount, leftDecimals);
+        const rightAmountParsed = ethers.parseUnits(rightAmount, rightDecimals);
+
+        const tx = await contract.createSwap(
+          leftTokenAddress,
+          leftAmountParsed,
+          rightTokenAddress,
+          rightAmountParsed,
+          { value: ownerValue }
+        );
+        await tx.wait();
+        document.getElementById("status-message").innerText = `✅ Swap criado com sucesso! Hash: ${tx.hash}`;
+      } catch (err) {
+        document.getElementById("status-message").innerText = `❌ Erro: ${err.message}`;
+      }
+    }
+
+    document.getElementById("connectMetaMask").addEventListener("click", connectWallet);
+    document.getElementById("getOwnerValueButton").addEventListener("click", getOwnerValue);
+    document.getElementById("getPendingSwapsButton").addEventListener("click", getPendingSwaps);
+    document.getElementById("approveButton").addEventListener("click", approveToken);
+    document.getElementById("createSwapButton").addEventListener("click", createSwap);
+  </script>
+</body>
+</html>

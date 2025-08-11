@@ -1,0 +1,22 @@
+{
+  "name": "swapbook",
+  "version": "1.0.0",
+  "description": "Projeto para conectar ao contrato de swapbook",
+  "main": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "hardhat": "^2.26.1"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0",
+    "bip39": "^3.1.0",
+    "dotenv": "^17.2.1",
+    "ethers": "^6.15.0",
+    "hdkey": "^2.1.0"
+  }
+}
