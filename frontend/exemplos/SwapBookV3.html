@@ -45,6 +45,7 @@
     </div>
     <button id="approveButton">✅ 1. Aprovar Tokens</button>
     <button id="createSwapButton">🚀 2. Criar Swap</button>
+    <button id="swapVendidos">3. Listar Swap Vendidos</button>
 
     <h2>Swaps Pendentes</h2>
     <ul id="swaps-list"></ul>
@@ -52,14 +53,32 @@
 
   <script>
     let provider, signer, contract;
-    const contractAddress = "0xA6ceCB5027313f5E7db388709bABe4197B1244bc";
+    const contractAddress = "0x39b1c83f07d37bB1F81ca80312285503d906cC4F";
 
-    const contractABI = [
-      { "inputs": [ { "internalType": "uint256", "name": "ownerValue_", "type": "uint256" }, { "internalType": "address", "name": "initialOwner", "type": "address" } ], "stateMutability": "nonpayable", "type": "constructor" },
-      { "inputs": [], "name": "getOwnerValue", "outputs": [ { "internalType": "uint256", "name": "", "type": "uint256" } ], "stateMutability": "view", "type": "function" },
-      { "inputs": [], "name": "getPendingSwaps", "outputs": [ { "components": [ { "internalType": "uint256", "name": "id", "type": "uint256" }, { "internalType": "address", "name": "seller", "type": "address" }, { "internalType": "address", "name": "leftToken", "type": "address" }, { "internalType": "uint256", "name": "leftTokenAmount", "type": "uint256" }, { "internalType": "address", "name": "rightToken", "type": "address" }, { "internalType": "uint256", "name": "rightTokenAmount", "type": "uint256" } ], "internalType": "struct WebdexSwapBookv3.SwapInfo[]", "name": "", "type": "tuple[]" } ], "stateMutability": "view", "type": "function" },
-      { "inputs": [ { "internalType": "address", "name": "leftToken", "type": "address" }, { "internalType": "uint256", "name": "leftTokenAmount", "type": "uint256" }, { "internalType": "address", "name": "rightToken", "type": "address" }, { "internalType": "uint256", "name": "rightTokenAmount", "type": "uint256" } ], "name": "createSwap", "outputs": [], "stateMutability": "payable", "type": "function" }
-    ];
+   const contractABI = [
+  { "inputs": [{ "internalType": "uint256", "name": "ownerValue_", "type": "uint256" }, { "internalType": "address", "name": "initialOwner", "type": "address" }], "stateMutability": "nonpayable", "type": "constructor" },
+  { "inputs": [{ "internalType": "address", "name": "owner", "type": "address" }], "name": "OwnableInvalidOwner", "type": "error" },
+  { "inputs": [{ "internalType": "address", "name": "account", "type": "address" }], "name": "OwnableUnauthorizedAccount", "type": "error" },
+  { "inputs": [], "name": "ReentrancyGuardReentrantCall", "type": "error" },
+  { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "owner", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "FeesWithdrawn", "type": "event" },
+  { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }], "name": "OwnershipTransferred", "type": "event" },
+  { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "id", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "seller", "type": "address" }], "name": "SwapCancelled", "type": "event" },
+  { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "id", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "seller", "type": "address" }, { "indexed": true, "internalType": "address", "name": "leftToken", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "leftAmount", "type": "uint256" }, { "indexed": false, "internalType": "address", "name": "rightToken", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "rightAmount", "type": "uint256" }], "name": "SwapCreated", "type": "event" },
+  { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "uint256", "name": "id", "type": "uint256" }, { "indexed": true, "internalType": "address", "name": "buyer", "type": "address" }, { "indexed": true, "internalType": "address", "name": "seller", "type": "address" }], "name": "SwapExecuted", "type": "event" },
+  { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "string", "name": "method", "type": "string" }, { "indexed": false, "internalType": "uint256", "name": "timeStamp", "type": "uint256" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "Transaction", "type": "event" },
+  { "inputs": [{ "internalType": "uint256", "name": "swapId", "type": "uint256" }], "name": "cancelSwap", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "address", "name": "leftToken", "type": "address" }, { "internalType": "uint256", "name": "leftTokenAmount", "type": "uint256" }, { "internalType": "address", "name": "rightToken", "type": "address" }, { "internalType": "uint256", "name": "rightTokenAmount", "type": "uint256" }], "name": "createSwap", "outputs": [], "stateMutability": "payable", "type": "function" },
+  { "inputs": [], "name": "getOwnerValue", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+  { "inputs": [], "name": "getPendingSwaps", "outputs": [{ "components": [{ "internalType": "uint256", "name": "id", "type": "uint256" }, { "internalType": "address", "name": "seller", "type": "address" }, { "internalType": "address", "name": "leftToken", "type": "address" }, { "internalType": "uint256", "name": "leftTokenAmount", "type": "uint256" }, { "internalType": "address", "name": "rightToken", "type": "address" }, { "internalType": "uint256", "name": "rightTokenAmount", "type": "uint256" }], "internalType": "struct WebdexSwapBookv3.SwapInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" },
+  { "inputs": [], "name": "getSoldSwaps", "outputs": [{ "components": [{ "internalType": "uint256", "name": "id", "type": "uint256" }, { "internalType": "address", "name": "seller", "type": "address" }, { "internalType": "address", "name": "leftToken", "type": "address" }, { "internalType": "uint256", "name": "leftTokenAmount", "type": "uint256" }, { "internalType": "address", "name": "rightToken", "type": "address" }, { "internalType": "uint256", "name": "rightTokenAmount", "type": "uint256" }], "internalType": "struct WebdexSwapBookv3.SwapInfo[]", "name": "", "type": "tuple[]" }], "stateMutability": "view", "type": "function" },
+  { "inputs": [], "name": "owner", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" },
+  { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "uint256", "name": "swapId", "type": "uint256" }], "name": "swapTokens", "outputs": [], "stateMutability": "payable", "type": "function" },
+  { "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "name": "swaps", "outputs": [{ "internalType": "uint256", "name": "id", "type": "uint256" }, { "internalType": "address", "name": "seller", "type": "address" }, { "internalType": "address", "name": "leftToken", "type": "address" }, { "internalType": "uint256", "name": "leftTokenAmount", "type": "uint256" }, { "internalType": "address", "name": "rightToken", "type": "address" }, { "internalType": "uint256", "name": "rightTokenAmount", "type": "uint256" }, { "internalType": "uint8", "name": "status", "type": "uint8" }], "stateMutability": "view", "type": "function" },
+  { "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }], "name": "transferOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [{ "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "withdrawFees", "outputs": [], "stateMutability": "nonpayable", "type": "function" }
+];
+
 
     const erc20Abi = [
       "function approve(address spender, uint256 amount) returns (bool)",
@@ -155,12 +174,36 @@
         document.getElementById("status-message").innerText = `❌ Erro: ${err.message}`;
       }
     }
+      async function getSoldSwaps() {
+      try {
+        const swaps = await contract.getSoldSwaps();
+        const list = document.getElementById("swaps-list");
+        list.innerHTML = "";
+        if (swaps.length === 0) return list.innerHTML = "<li>Nenhum swap aprovado.</li>";
+
+        swaps.forEach(swap => {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <strong>ID:</strong> ${swap.id} <br>
+            <strong>Vendedor:</strong> ${swap.seller} <br>
+            <strong>Vende:</strong> ${swap.leftTokenAmount} de ${swap.leftToken} <br>
+            <strong>Quer:</strong> ${swap.rightTokenAmount} de ${swap.rightToken}
+          `;
+          list.appendChild(li);
+        });
+      } catch (err) {
+        document.getElementById("status-message").innerText = `❌ Erro: ${err.message}`;
+      }
+    }
+
 
     document.getElementById("connectMetaMask").addEventListener("click", connectWallet);
     document.getElementById("getOwnerValueButton").addEventListener("click", getOwnerValue);
     document.getElementById("getPendingSwapsButton").addEventListener("click", getPendingSwaps);
     document.getElementById("approveButton").addEventListener("click", approveToken);
     document.getElementById("createSwapButton").addEventListener("click", createSwap);
+    document.getElementById("swapVendidos").addEventListener("click", getSoldSwaps);
+
   </script>
 </body>
 </html>

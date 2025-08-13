@@ -185,7 +185,7 @@ contract WebdexSwapBookv3 is Ownable, ReentrancyGuard {
         soldSwapIds.push(swapId);
 
       emit SwapExecuted(swapId, msg.sender, currentSwap.seller);
-     emit Transaction(msg.sender, currentSwap.seller, "Swap Tokens", block.timestamp, msg.value);
+      emit Transaction(msg.sender, currentSwap.seller, "Swap Tokens", block.timestamp, msg.value);
     }
 
     /// @notice Cancela um swap pendente — apenas o seller pode cancelar.

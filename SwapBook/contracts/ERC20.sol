@@ -55,6 +55,29 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         _name = name_;
         _symbol = symbol_;
     }
+    contract MyTestToken is ERC20 {
+    address public owner;
+
+    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {
+        owner = msg.sender;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not the owner");
+        _;
+    }
+
+    /// @notice Mint de teste para qualquer endereço
+    /// @dev Pode limitar para onlyOwner se quiser controle total
+    function mint(address to, uint256 amount) public onlyOwner {
+        _mint(to, amount);
+    }
+
+    /// @notice Mint rápido para o próprio chamador (útil para testes)
+    function faucet(uint256 amount) public {
+        _mint(msg.sender, amount);
+    }
+}
 
     /**
      * @dev Returns the name of the token.
