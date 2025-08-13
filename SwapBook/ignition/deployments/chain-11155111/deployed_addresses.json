@@ -1,3 +1,5 @@
 {
-  "WebdexSwapBookv3Module#WebdexSwapBookv3": "0x39b1c83f07d37bB1F81ca80312285503d906cC4F"
+  "WebdexSwapBookv3Module#WebdexSwapBookv3": "0x39b1c83f07d37bB1F81ca80312285503d906cC4F",
+  "DeployModule#TokenCustom": "0xAdBdef15ee8055588e41116Aaf3cdB658E1b193b",
+  "DeployModule#WebdexSwapBookv3": "0xcf510c6419Da65042A0E0484A60B5D694a5C4D7D"
 }
