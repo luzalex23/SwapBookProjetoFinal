@@ -39,10 +39,10 @@ const buyOrders = [
   ...order,
   price: order.price.toFixed(4),
   amount: order.amount.toFixed(4),
-   sender: {
-        display: order.sender.slice(0, 6) + "..." + order.sender.slice(-4),
-        full: order.sender
-      }
+  sender: {
+    display: order.sender.slice(0, 6) + "..." + order.sender.slice(-4),
+    full: order.sender
+  }
 }));
 
 
@@ -153,8 +153,8 @@ export function OrderBook() {
                   <span className="text-success font-medium">{order.price}</span>
                   <span className="text-left text-muted-foreground">{order.amount}</span>
                   <span
-                    onMouseEnter={() => navigator.clipboard.writeText(order.sender.full)}
-                    title="Copiado ao passar o mouse"
+                    onClick={() => navigator.clipboard.writeText(order.sender.full)}
+                    title="Clique para copiar"
                     style={{ cursor: "pointer" }}
                   >
                     {order.sender.display}
@@ -184,8 +184,8 @@ export function OrderBook() {
                   <span className="text-success font-medium">{order.price}</span>
                   <span className="text-right text-foreground">{order.amount}</span>
                   <span
-                    onMouseEnter={() => navigator.clipboard.writeText(order.sender.full)}
-                    title="Copiado ao passar o mouse"
+                    onClick={() => navigator.clipboard.writeText(order.sender.full)}
+                    title="Clique para copiar"
                     style={{ cursor: "pointer" }}
                   >
                     {order.sender.display}
