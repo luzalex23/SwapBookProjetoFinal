@@ -5,6 +5,7 @@ import { BookOpen, TrendingUp, TrendingDown, Plus, Minus } from "lucide-react";
 import { useState } from "react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { getPendingSwaps } from '@/js/IteracaoContrato.js';
+import { TradeModal } from "@/components/ui/TradeModal";
 
 const sellOrders = [];
 
@@ -33,8 +34,6 @@ const buyOrders = [
   { price: 0.3831, amount: 45.3000, sender: "0xa639f0CB23B7831FDC80103ef9Efa86b9ADB7ac9" },
   { price: 0.3830, amount: 156.7000, sender: "0xa639f0CB23B7831FDC80103ef9Efa86b9ADB7ac9" },
   { price: 0.3829, amount: 78.9000, sender: "0xa639f0CB23B7831FDC80103ef9Efa86b9ADB7ac9" },
-  { price: 0.3828, amount: 1234.0000, sender: "0xa639f0CB23B7831FDC80103ef9Efa86b9ADB7ac9" },
-  { price: 0.3827, amount: 34.2000, sender: "0xa639f0CB23B7831FDC80103ef9Efa86b9ADB7ac9" },
 ].map(order => ({
   ...order,
   price: order.price.toFixed(4),
@@ -113,11 +112,24 @@ const priceChartData = {
 };
 
 export function OrderBook() {
+
+  
+const [modalOpen, setModalOpen] = useState(false);
+const [modalType, setModalType] = useState<'buy' | 'sell' | null>(null);
+const [selectedOrder, setSelectedOrder] = useState<any>(null);
+
+const handleOpenModal = (type: 'buy' | 'sell', order: any) => {
+  setModalType(type);
+  setSelectedOrder(order);
+  setModalOpen(true);
+};
+
   const [selectedPeriod, setSelectedPeriod] = useState('1d');
 
   const currentChartData = priceChartData[selectedPeriod as keyof typeof priceChartData];
 
   return (
+    
     <Card className="bg-gradient-card border-border shadow-card backdrop-blur-sm">
       <CardHeader>
         <div className="flex items-center justify-between">
@@ -159,7 +171,7 @@ export function OrderBook() {
                   >
                     {order.sender.display}
                   </span>
-                  <Button className="bg-green-500 text-white hover:bg-green-600">
+                  <Button className="bg-green-500 text-white hover:bg-green-600" onClick={() => handleOpenModal('buy', order)}>
                     <Plus className="h-4 w-4 mr-2" />
                     Comprar
                   </Button>
@@ -190,7 +202,10 @@ export function OrderBook() {
                   >
                     {order.sender.display}
                   </span>
-                  <Button>
+                  <Button
+                    className="bg-destructive text-white hover:bg-destructive/80"
+                    onClick={() => handleOpenModal('sell', order)}
+                  >
                     <Minus className="h-4 w-3 mr-1" />
                     Vender
                   </Button>
@@ -414,6 +429,12 @@ export function OrderBook() {
           </div>
         </div>
       </CardContent>
+      <TradeModal
+      open={modalOpen}
+      onOpenChange={setModalOpen}
+      type={modalType as 'buy' | 'sell'}
+      order={selectedOrder}
+    />
     </Card>
   );
 }
