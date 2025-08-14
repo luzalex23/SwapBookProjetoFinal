@@ -1,37 +1,48 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, TrendingUp, TrendingDown, Plus } from "lucide-react";
+import { BookOpen, TrendingUp, TrendingDown, Plus, Minus } from "lucide-react";
 import { useState } from "react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { getPendingSwaps } from '@/js/IteracaoContrato.js';
 
-const sellOrders  = [];
+const sellOrders = [];
 
 void async function pegaSwapsPendentes(): Promise<void> {
   const swaps = await getPendingSwaps();
-  swaps.map((index, value) => {
+  swaps.map(index => {
+    const fullSender = String(index[1]);
     sellOrders.push({
-      price: value[3],
-      amount: value[4]
+      id: String(index[0]),
+      sender: {
+        display: fullSender.slice(0, 6) + "..." + fullSender.slice(-4), // mostrado na tela
+        full: fullSender // para copiar inteiro
+      },
+      amount: String(index[3]).slice(0, 10),
+      price: String(index[5])
+
     });
   });
+
 }();
 
 const buyOrders = [
-  { price: 0.3834, amount: 234.5000, total: 0 },
-  { price: 0.3833, amount: 67.8000, total: 0 },
-  { price: 0.3832, amount: 890.1000, total: 0 },
-  { price: 0.3831, amount: 45.3000, total: 0 },
-  { price: 0.3830, amount: 156.7000, total: 0 },
-  { price: 0.3829, amount: 78.9000, total: 0 },
-  { price: 0.3828, amount: 1234.0000, total: 0 },
-  { price: 0.3827, amount: 34.2000, total: 0 },
+  { price: 0.3834, amount: 234.5000, sender: "0xa639f0CB23B7831FDC80103ef9Efa86b9ADB7ac9" },
+  { price: 0.3833, amount: 67.8000, sender: "0xa639f0CB23B7831FDC80103ef9Efa86b9ADB7ac9" },
+  { price: 0.3832, amount: 890.1000, sender: "0xa639f0CB23B7831FDC80103ef9Efa86b9ADB7ac9" },
+  { price: 0.3831, amount: 45.3000, sender: "0xa639f0CB23B7831FDC80103ef9Efa86b9ADB7ac9" },
+  { price: 0.3830, amount: 156.7000, sender: "0xa639f0CB23B7831FDC80103ef9Efa86b9ADB7ac9" },
+  { price: 0.3829, amount: 78.9000, sender: "0xa639f0CB23B7831FDC80103ef9Efa86b9ADB7ac9" },
+  { price: 0.3828, amount: 1234.0000, sender: "0xa639f0CB23B7831FDC80103ef9Efa86b9ADB7ac9" },
+  { price: 0.3827, amount: 34.2000, sender: "0xa639f0CB23B7831FDC80103ef9Efa86b9ADB7ac9" },
 ].map(order => ({
   ...order,
-  total: (order.price * order.amount).toFixed(4),
   price: order.price.toFixed(4),
-  amount: order.amount.toFixed(4)
+  amount: order.amount.toFixed(4),
+   sender: {
+        display: order.sender.slice(0, 6) + "..." + order.sender.slice(-4),
+        full: order.sender
+      }
 }));
 
 
@@ -128,20 +139,30 @@ export function OrderBook() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
           {/* Sell Orders (Asks) */}
           <div className="p-4 border-r border-border/30">
-            <div className="mb-3">
+            <div className="mb-4">
               <h3 className="text-sm font-medium text-muted-foreground mb-2">Vendas (Asks)</h3>
-              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground mb-2">
+              <div className="grid grid-cols-4 gap-5 text-xs text-muted-foreground mb-2">
                 <span>Preço (USDT)</span>
-                <span className="text-right">Quantidade</span>
-                <span className="text-right">Total</span>
+                <span>Quantidade</span>
+                <span>Carteira</span>
               </div>
             </div>
             <div className="space-y-1">
               {sellOrders.map((order, index) => (
-                <div key={index} className="grid grid-cols-3 gap-2 text-sm hover:bg-destructive/10 p-1 rounded cursor-pointer transition-colors">
-                  <span className="text-destructive font-medium">{order.price}</span>
-                  <span className="text-right text-foreground">{order.amount}</span>
-                  <span className="text-right text-muted-foreground">{order.total}</span>
+                <div key={index} className="grid grid-cols-4 gap-6 text-sm hover:bg-destructive/10 p-1 rounded cursor-pointer transition-colors">
+                  <span className="text-success font-medium">{order.price}</span>
+                  <span className="text-left text-muted-foreground">{order.amount}</span>
+                  <span
+                    onMouseEnter={() => navigator.clipboard.writeText(order.sender.full)}
+                    title="Copiado ao passar o mouse"
+                    style={{ cursor: "pointer" }}
+                  >
+                    {order.sender.display}
+                  </span>
+                  <Button className="bg-green-500 text-white hover:bg-green-600">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Comprar
+                  </Button>
                 </div>
               ))}
             </div>
@@ -149,20 +170,30 @@ export function OrderBook() {
 
           {/* Buy Orders (Bids) */}
           <div className="p-4">
-            <div className="mb-3">
+            <div className="mb-4">
               <h3 className="text-sm font-medium text-muted-foreground mb-2">Compras (Bids)</h3>
-              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground mb-2">
+              <div className="grid grid-cols-4 gap-6 text-xs text-muted-foreground mb-2">
                 <span>Preço (USDT)</span>
                 <span className="text-right">Quantidade</span>
-                <span className="text-right">Total</span>
+                <span className="text-right">Carteira</span>
               </div>
             </div>
             <div className="space-y-1">
               {buyOrders.map((order, index) => (
-                <div key={index} className="grid grid-cols-3 gap-2 text-sm hover:bg-success/10 p-1 rounded cursor-pointer transition-colors">
+                <div key={index} className="grid grid-cols-4 gap-6 text-sm hover:bg-success/10 p-1 rounded cursor-pointer transition-colors">
                   <span className="text-success font-medium">{order.price}</span>
                   <span className="text-right text-foreground">{order.amount}</span>
-                  <span className="text-right text-muted-foreground">{order.total}</span>
+                  <span
+                    onMouseEnter={() => navigator.clipboard.writeText(order.sender.full)}
+                    title="Copiado ao passar o mouse"
+                    style={{ cursor: "pointer" }}
+                  >
+                    {order.sender.display}
+                  </span>
+                  <Button>
+                    <Minus className="h-4 w-3 mr-1" />
+                    Vender
+                  </Button>
                 </div>
               ))}
             </div>
@@ -173,15 +204,15 @@ export function OrderBook() {
         <div className="border-t border-border/30 p-4 bg-secondary/10">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
             <h3 className="text-lg font-semibold text-foreground">Minhas Ordens de Oferta</h3>
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               className="bg-gradient-to-r from-primary to-primary-glow hover:from-primary/90 hover:to-primary-glow/90 shadow-lg hover:shadow-primary/25 transition-all duration-300 w-full sm:w-auto"
             >
               <Plus className="h-4 w-4 mr-2" />
               Abrir nova ordem
             </Button>
           </div>
-          
+
           {/* Ordens em Aberto */}
           <div className="mb-6">
             <h4 className="text-sm font-medium text-muted-foreground mb-3">Ordens em Aberto</h4>
@@ -217,7 +248,7 @@ export function OrderBook() {
                     </div>
                     <div className="text-xs text-muted-foreground">{order.date}</div>
                   </div>
-                  
+
                   {/* Desktop Layout */}
                   <div className="hidden sm:grid grid-cols-5 gap-2 text-sm items-center">
                     <span className={order.type === 'buy' ? 'text-success font-medium' : 'text-destructive font-medium'}>
@@ -270,7 +301,7 @@ export function OrderBook() {
                     </div>
                     <div className="text-xs text-muted-foreground">{order.date}</div>
                   </div>
-                  
+
                   {/* Desktop Layout */}
                   <div className="hidden sm:grid grid-cols-5 gap-2 text-sm items-center">
                     <span className={order.type === 'buy' ? 'text-success font-medium' : 'text-destructive font-medium'}>
@@ -322,7 +353,7 @@ export function OrderBook() {
                 ))}
               </div>
             </div>
-            
+
             <div className="bg-secondary/30 rounded-lg p-4 mb-4">
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -343,20 +374,20 @@ export function OrderBook() {
               <div className="h-48 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={currentChartData}>
-                    <XAxis 
-                      dataKey="time" 
+                    <XAxis
+                      dataKey="time"
                       axisLine={false}
                       tickLine={false}
                       tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                     />
-                    <YAxis 
+                    <YAxis
                       domain={['dataMin - 0.005', 'dataMax + 0.005']}
                       axisLine={false}
                       tickLine={false}
                       tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                       tickFormatter={(value) => `$${value.toFixed(3)}`}
                     />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{
                         backgroundColor: 'hsl(var(--popover))',
                         border: '1px solid hsl(var(--border))',
@@ -368,10 +399,10 @@ export function OrderBook() {
                         name === 'price' ? 'Preço' : 'Volume'
                       ]}
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="price" 
-                      stroke="hsl(var(--primary))" 
+                    <Line
+                      type="monotone"
+                      dataKey="price"
+                      stroke="hsl(var(--primary))"
                       strokeWidth={2}
                       dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
                       activeDot={{ r: 6, fill: 'hsl(var(--primary))' }}
