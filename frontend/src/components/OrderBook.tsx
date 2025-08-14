@@ -4,25 +4,28 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, TrendingUp, TrendingDown, Plus } from "lucide-react";
 import { useState } from "react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
+import { getPendingSwaps } from '@/js/IteracaoContrato.js';
 
-// Dados simulados do book de ofertas WEbdEX/USDT baseado no preço de $0.38
-const sellOrders = [
-  { price: 0.3842, amount: 12.1000, total: 0 },
-  { price: 0.3841, amount: 127.0000, total: 0 },
-  { price: 0.3840, amount: 2.0000, total: 0 },
-  { price: 0.3839, amount: 37.0000, total: 0 },
-  { price: 0.3838, amount: 2000.0000, total: 0 },
-  { price: 0.3837, amount: 89.5000, total: 0 },
-  { price: 0.3836, amount: 456.2000, total: 0 },
-  { price: 0.3835, amount: 23.7000, total: 0 },
+void async function pegaSwapsPendentes(): Promise<void> {
+  const swaps = await getPendingSwaps();
+}();
+
+const buyOrders = [
+  { price: 0.3834, amount: 234.5000, total: 0 },
+  { price: 0.3833, amount: 67.8000, total: 0 },
+  { price: 0.3832, amount: 890.1000, total: 0 },
+  { price: 0.3831, amount: 45.3000, total: 0 },
+  { price: 0.3830, amount: 156.7000, total: 0 },
+  { price: 0.3829, amount: 78.9000, total: 0 },
+  { price: 0.3828, amount: 1234.0000, total: 0 },
+  { price: 0.3827, amount: 34.2000, total: 0 },
 ].map(order => ({
   ...order,
   total: (order.price * order.amount).toFixed(4),
   price: order.price.toFixed(4),
   amount: order.amount.toFixed(4)
 }));
-
-const buyOrders = [
+const sellOrders = [
   { price: 0.3834, amount: 234.5000, total: 0 },
   { price: 0.3833, amount: 67.8000, total: 0 },
   { price: 0.3832, amount: 890.1000, total: 0 },
