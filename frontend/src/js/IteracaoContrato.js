@@ -15,7 +15,7 @@ export const getPendingSwaps = async () => {
   try {
     const swaps = await contract.getPendingSwaps();
     if (swaps.length === 0) alert("Nenhum swap pendente encontrado.");
-    alert(swaps);
+    return swaps;
   } catch (err) {
     alert('error -> ' + err.message);
     return ['Erro'];

@@ -6,8 +6,16 @@ import { useState } from "react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { getPendingSwaps } from '@/js/IteracaoContrato.js';
 
+const sellOrders  = [];
+
 void async function pegaSwapsPendentes(): Promise<void> {
   const swaps = await getPendingSwaps();
+  swaps.map((index, value) => {
+    sellOrders.push({
+      price: value[3],
+      amount: value[4]
+    });
+  });
 }();
 
 const buyOrders = [
@@ -25,21 +33,7 @@ const buyOrders = [
   price: order.price.toFixed(4),
   amount: order.amount.toFixed(4)
 }));
-const sellOrders = [
-  { price: 0.3834, amount: 234.5000, total: 0 },
-  { price: 0.3833, amount: 67.8000, total: 0 },
-  { price: 0.3832, amount: 890.1000, total: 0 },
-  { price: 0.3831, amount: 45.3000, total: 0 },
-  { price: 0.3830, amount: 156.7000, total: 0 },
-  { price: 0.3829, amount: 78.9000, total: 0 },
-  { price: 0.3828, amount: 1234.0000, total: 0 },
-  { price: 0.3827, amount: 34.2000, total: 0 },
-].map(order => ({
-  ...order,
-  total: (order.price * order.amount).toFixed(4),
-  price: order.price.toFixed(4),
-  amount: order.amount.toFixed(4)
-}));
+
 
 // Minhas ordens de oferta
 const myOrders = {
