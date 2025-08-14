@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ethers } from "ethers";
 import { BookOpen, TrendingUp, TrendingDown, Plus, Minus } from "lucide-react";
 import { useState } from "react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
@@ -8,10 +9,23 @@ import { getPendingSwaps } from '@/js/IteracaoContrato.js';
 import { TradeModal } from "@/components/ui/TradeModal";
 
 const sellOrders = [];
+type Swap = [string, string, string, bigint, string, bigint];
+
+function formatTokenAmount(value, decimals = 18) {
+  try {
+    const humanValue = ethers.formatUnits(value, decimals);
+    return Number(humanValue).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 10
+    });
+  } catch (e) {
+    return value;
+  }
+}
 
 void async function pegaSwapsPendentes(): Promise<void> {
   const swaps = await getPendingSwaps();
-  swaps.map(index => {
+  swaps.map((index:Swap) => {
     const fullSender = String(index[1]);
     sellOrders.push({
       id: String(index[0]),
@@ -19,10 +33,13 @@ void async function pegaSwapsPendentes(): Promise<void> {
         display: fullSender.slice(0, 6) + "..." + fullSender.slice(-4), // mostrado na tela
         full: fullSender // para copiar inteiro
       },
-      amount: String(index[3]).slice(0, 10),
-      price: String(index[5])
+      amount: String(formatTokenAmount(index[3], (index[3].toString().length-1))),
+      price: String(formatTokenAmount(index[5],  (index[5].toString().length-1))),
 
     });
+    console.log("Tamanho 3: " + ((index[3].toString().length-1)));
+
+    console.log("Tamanho 5: " + ((index[5].toString().length-1)));
   });
 
 }();
@@ -117,6 +134,8 @@ export function OrderBook() {
 const [modalOpen, setModalOpen] = useState(false);
 const [modalType, setModalType] = useState<'buy' | 'sell' | null>(null);
 const [selectedOrder, setSelectedOrder] = useState<any>(null);
+
+
 
 const handleOpenModal = (type: 'buy' | 'sell', order: any) => {
   setModalType(type);
